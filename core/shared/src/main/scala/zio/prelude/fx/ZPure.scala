@@ -683,7 +683,7 @@ sealed trait ZPure[+W, -S1, +S2, -R, +E, +A] { self =>
           val nextInstr = stack.pop()
           if (nextInstr eq null) curZPure = null else curZPure = nextInstr(a)
         case Tags.Log     =>
-          val zPure     = curZPure.asInstanceOf[Log[Any, Any]]
+          val zPure     = curZPure.asInstanceOf[Log[Any]]
           builder += zPure.log
           val nextInstr = stack.pop()
           a = ()
@@ -932,7 +932,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
   def collectAll[F[+_]: ForEach, W, S, R, E, A](fa: F[ZPure[W, S, S, R, E, A]]): ZPure[W, S, S, R, E, F[A]] =
     ForEach[F].flip[({ type lambda[+A] = ZPure[W, S, S, R, E, A] })#lambda, A](fa)
 
-  def environment[S, R]: ZPure[Nothing, S, S, R, Nothing, R]                                                =
+  def environment[R]: ZPure[Nothing, Any, Nothing, R, Nothing, R]                                           =
     access(r => r)
 
   def fail[E](e: E): ZPure[Nothing, Any, Nothing, Any, E, Nothing] =
@@ -944,7 +944,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
   /**
    * Constructs a computation that extracts the first element of a tuple.
    */
-  def first[S, A]: ZPure[Nothing, S, S, (A, Any), Nothing, A] =
+  def first[A]: ZPure[Nothing, Any, Nothing, (A, Any), Nothing, A] =
     fromFunction(_._1)
 
   /**
@@ -953,14 +953,14 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
    * assertion or else will contain a string rendering describing how the
    * value did not satisfy the assertion.
    */
-  def fromAssert[S, A](value: A)(assertion: Assertion[A]): ZPure[Nothing, S, S, Any, String, A] =
+  def fromAssert[A](value: A)(assertion: Assertion[A]): ZPure[Nothing, Any, Nothing, Any, String, A] =
     if (assertion.test(value)) succeed(value)
     else fail(s"$value did not satisfy ${assertion.render}")
 
   /**
    * Constructs a computation from an effect that may throw.
    */
-  def fromEffect[S, A](effect: => A): ZPure[Nothing, S, S, Any, Throwable, A] =
+  def fromEffect[A](effect: => A): ZPure[Nothing, Any, Nothing, Any, Throwable, A] =
     suspend {
       try ZPure.succeed(effect)
       catch {
@@ -971,19 +971,19 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
   /**
    * Constructs a computation from an `Either`.
    */
-  def fromEither[S, L, R](either: Either[L, R]): ZPure[Nothing, S, S, Any, L, R] =
+  def fromEither[L, R](either: Either[L, R]): ZPure[Nothing, Any, Nothing, Any, L, R] =
     either.fold(l => ZPure.fail(l), r => ZPure.succeed(r))
 
   /**
    * Constructs a computation from a function.
    */
-  def fromFunction[S, R, A](f: R => A): ZPure[Nothing, S, S, R, Nothing, A] =
+  def fromFunction[R, A](f: R => A): ZPure[Nothing, Any, Nothing, R, Nothing, A] =
     access(f)
 
   /**
    * Constructs a computation from an `Option`.
    */
-  def fromOption[S, A](option: Option[A]): ZPure[Nothing, S, S, Any, Unit, A] =
+  def fromOption[A](option: Option[A]): ZPure[Nothing, Any, Nothing, Any, Unit, A] =
     option match {
       case Some(a) => ZPure.succeed(a)
       case None    => ZPure.fail(())
@@ -1005,7 +1005,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
   /**
    * Constructs a computation from a `scala.util.Try`.
    */
-  def fromTry[S, A](t: Try[A]): ZPure[Nothing, S, S, Any, Throwable, A] =
+  def fromTry[S, A](t: Try[A]): ZPure[Nothing, Any, Nothing, Any, Throwable, A] =
     fromEffect(t).flatMap {
       case scala.util.Success(v) => ZPure.succeed(v)
       case scala.util.Failure(t) => ZPure.fail(t)
@@ -1027,7 +1027,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
   def get[S]: ZPure[Nothing, S, S, Any, Nothing, S] =
     modify(s => (s, s))
 
-  def log[S, W](w: W): ZPure[W, S, S, Any, Nothing, Unit] =
+  def log[W](w: W): ZPure[W, Any, Nothing, Any, Nothing, Unit] =
     ZPure.Log(w)
 
   /**
@@ -1073,7 +1073,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
   /**
    * Constructs a computation that extracts the second element of a tuple.
    */
-  def second[S, B]: ZPure[Nothing, S, S, (Any, B), Nothing, B] =
+  def second[B]: ZPure[Nothing, Any, Nothing, (Any, B), Nothing, B] =
     fromFunction(_._2)
 
   /**
@@ -1086,7 +1086,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
    * Constructs a computation that always succeeds with the specified value,
    * passing the state through unchanged.
    */
-  def succeed[S, A](a: A): ZPure[Nothing, S, S, Any, Nothing, A] =
+  def succeed[A](a: A): ZPure[Nothing, Any, Nothing, Any, Nothing, A] =
     Succeed(a)
 
   /**
@@ -1119,7 +1119,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
    * Constructs a computation that always returns the `Unit` value, passing the
    * state through unchanged.
    */
-  def unit[S]: ZPure[Nothing, S, S, Any, Nothing, Unit] =
+  val unit: ZPure[Nothing, Any, Nothing, Any, Nothing, Unit] =
     succeed(())
 
   /**
@@ -1129,7 +1129,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
     modify(s => (f(s), ()))
 
   final class AccessPartiallyApplied[R](private val dummy: Boolean = true) extends AnyVal {
-    def apply[S, A](f: R => A): ZPure[Nothing, S, S, R, Nothing, A] =
+    def apply[A](f: R => A): ZPure[Nothing, Any, Nothing, R, Nothing, A] =
       Access(r => succeed(f(r)))
   }
 
@@ -1248,7 +1248,7 @@ object ZPure extends ZPureLowPriorityImplicits with ZPureArities {
     override def tag: Int = Tags.Provide
   }
 
-  private final case class Log[S, +W](log: W) extends ZPure[W, S, S, Any, Nothing, Unit] {
+  private final case class Log[+W](log: W) extends ZPure[W, Any, Nothing, Any, Nothing, Unit] {
     override def tag: Int = Tags.Log
   }
 }
