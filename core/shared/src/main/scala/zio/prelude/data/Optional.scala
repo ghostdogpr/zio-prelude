@@ -50,7 +50,7 @@ sealed trait Optional[+A] { self =>
       case Optional.Absent       => ifEmpty
     }
 
-  final def flatten[B](implicit ev: A <:< Option[B]): Option[B] =
+  final def flatten[B](implicit ev: A <:< Optional[B]): Optional[B] =
     self match {
       case Optional.Present(get) => ev(get)
       case Optional.Absent       => None
@@ -119,11 +119,8 @@ sealed trait Optional[+A] { self =>
       case Optional.Absent       => Optional.Absent
     }
 
-  final def orElse[B >: A](other: Optional[B]): Optional[B] =
-    self match {
-      case Optional.Present(_) => self
-      case Optional.Absent     => other
-    }
+  final def orElse[B >: A](alternative: => Optional[B]): Optional[B] =
+    if (isEmpty) alternative else this
 
   final def iterator: Iterator[A] =
     self match {

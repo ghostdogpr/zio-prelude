@@ -5,6 +5,7 @@ import zio.test._
 import zio.test.laws._
 
 object IdentityEitherSpec extends ZIOBaseSpec {
+  import Fixtures._
 
   def spec: Spec[Environment, Any] =
     suite("IdentityEitherSpec")(
@@ -12,6 +13,7 @@ object IdentityEitherSpec extends ZIOBaseSpec {
         test("chunk")(checkAllLaws(IdentityEitherlaws)(GenF.chunk, Gen.int)),
         test("list")(checkAllLaws(IdentityEitherlaws)(GenF.list, Gen.int)),
         test("option")(checkAllLaws(IdentityEitherlaws)(GenF.option, Gen.int)),
+        test("optional")(checkAllLaws(IdentityEitherlaws)(optionalGenF, Gen.int)),
         test("set")(checkAllLaws(IdentityEitherlaws)(GenF.set, Gen.int)),
         test("vector")(checkAllLaws(IdentityEitherlaws)(GenF.vector, Gen.int))
       )

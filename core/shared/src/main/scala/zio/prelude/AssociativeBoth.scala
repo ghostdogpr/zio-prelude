@@ -18,6 +18,7 @@ package zio.prelude
 
 import zio._
 import zio.prelude.coherent.CovariantIdentityBoth
+import zio.prelude.data.Optional
 import zio.prelude.newtypes.{AndF, Failure, OrF}
 import zio.stm.ZSTM
 import zio.stream.{ZSink, ZStream}
@@ -1185,9 +1186,31 @@ object AssociativeBoth extends AssociativeBothLowPriority {
         Some(())
 
       def both[A, B](fa: => Option[A], fb: => Option[B]): Option[(A, B)] =
-        (fa, fb) match {
-          case (Some(a), Some(b)) => Some((a, b))
-          case _                  => None
+        fa match {
+          case Some(a) =>
+            fb match {
+              case Some(b) => Some((a, b))
+              case None    => None
+            }
+          case None    => None
+        }
+    }
+
+  /**
+   * The [[IdentityBoth]] (with [[AssociativeBoth]]) instance for [[zio.prelude.data.Optional]].
+   */
+  implicit val OptionalIdentityBoth: IdentityBoth[Optional] =
+    new IdentityBoth[Optional] {
+      val any: Optional[Any] = Optional.Present(())
+
+      def both[A, B](fa: => Optional[A], fb: => Optional[B]): Optional[(A, B)] =
+        fa match {
+          case Optional.Present(a) =>
+            fb match {
+              case Optional.Present(b) => Optional.Present((a, b))
+              case Optional.Absent     => Optional.Absent
+            }
+          case Optional.Absent     => Optional.Absent
         }
     }
 
