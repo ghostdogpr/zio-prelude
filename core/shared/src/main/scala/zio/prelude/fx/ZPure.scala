@@ -16,9 +16,9 @@
 
 package zio.prelude.fx
 
+import zio._
 import zio.prelude._
 import zio.prelude.coherent.CovariantIdentityBoth
-import zio._
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.reflect.ClassTag
