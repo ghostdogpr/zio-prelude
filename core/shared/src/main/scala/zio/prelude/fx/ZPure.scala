@@ -791,12 +791,12 @@ sealed trait ZPure[+W, -S1, +S2, -R, +E, +A] { self =>
   final def zipParLeft[W1 >: W, S3 >: S2 <: S1, R1 <: R, E1 >: E, B, C](
     that: ZPure[W1, S3, S3, R1, E1, B]
   ): ZPure[W1, S3, S3, R1, E1, A] =
-    self.zipWith(that)((a, _) => a)
+    self.zipWithPar(that)((a, _) => a)
 
   final def zipParRight[W1 >: W, S3 >: S2 <: S1, R1 <: R, E1 >: E, B, C](
     that: ZPure[W1, S3, S3, R1, E1, B]
   ): ZPure[W1, S3, S3, R1, E1, B] =
-    self.zipWith(that)((_, b) => b)
+    self.zipWithPar(that)((_, b) => b)
 
   /**
    * Returns a successful computation if the value is `Right`, or fails with error `None`.
@@ -934,19 +934,6 @@ object ZPure {
       case Some(a) => ZPure.succeed(a)
       case None    => ZPure.fail(())
     }
-
-  /**
-   * Constructs a `Validation` from a predicate, failing with None.
-   */
-  def fromPredicate[A](value: A)(f: A => Boolean): Validation[None.type, A] =
-    fromPredicateWith(None)(value)(f)
-
-  /**
-   * Constructs a `Validation` from a predicate, failing with the error provided.
-   */
-  def fromPredicateWith[E, A](error: => E)(value: A)(f: A => Boolean): Validation[E, A] =
-    if (f(value)) Validation.succeed(value)
-    else Validation.fail(error)
 
   /**
    * Constructs a computation from a `scala.util.Try`.
