@@ -466,13 +466,13 @@ trait ForEachSyntax {
       F: ForEach[F],
       I: IdentityEither[F],
       B: IdentityBoth[F]
-    ): F[B] =
+    ): F[B]                                                                                                     =
       F.collect(self)(pf)
     def collectM[G[+_]: IdentityBoth: Covariant, B](f: A => G[Option[B]])(implicit
       F: ForEach[F],
       I: IdentityEither[F],
       B: IdentityBoth[F]
-    ): G[F[B]] =
+    ): G[F[B]]                                                                                                  =
       F.collectM(self)(f)
     def concatenate(implicit F: ForEach[F], A: Identity[A]): A                                                  =
       F.concatenate(self)
@@ -490,7 +490,7 @@ trait ForEachSyntax {
       F: ForEach[F],
       I: IdentityEither[F],
       B: IdentityBoth[F]
-    ): G[F[A]] =
+    ): G[F[A]]                                                                                                  =
       F.filterM(self)(f)
     def find(f: A => Boolean)(implicit F: ForEach[F]): Option[A]                                                =
       F.find(self)(f)
@@ -514,7 +514,7 @@ trait ForEachSyntax {
       F.forEach_(self)(f)
     def forEachFlatten[G[+_]: IdentityBoth: Covariant, B](
       f: A => G[F[B]]
-    )(implicit F: ForEach[F], AF: AssociativeFlatten[F]): G[F[B]] =
+    )(implicit F: ForEach[F], AF: AssociativeFlatten[F]): G[F[B]]                                               =
       F.forEachFlatten(self)(f)
     def isEmpty(implicit F: ForEach[F]): Boolean                                                                =
       F.isEmpty(self)
@@ -556,11 +556,11 @@ trait ForEachSyntax {
       F.filter(self)(f)
     def zipAll[B](
       that: F[B]
-    )(implicit F: ForEach[F], both: IdentityBoth[F], either: IdentityEither[F]): F[These[A, B]] =
+    )(implicit F: ForEach[F], both: IdentityBoth[F], either: IdentityEither[F]): F[These[A, B]]                 =
       F.zipAll(self, that)
     def zipAllWith[B, C](that: F[B])(
       f: These[A, B] => C
-    )(implicit F: ForEach[F], both: IdentityBoth[F], either: IdentityEither[F]): F[C] =
+    )(implicit F: ForEach[F], both: IdentityBoth[F], either: IdentityEither[F]): F[C]                           =
       F.zipAllWith(self, that)(f)
     def zipWithIndex(implicit F: ForEach[F]): F[(A, Int)]                                                       =
       F.zipWithIndex(self)
